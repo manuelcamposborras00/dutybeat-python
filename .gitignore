@@ -1,0 +1,11 @@
+# Secrets — never commit real values
+.env
+
+# Build / caches
+dist/
+build/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/

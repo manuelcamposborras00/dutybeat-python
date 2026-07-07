@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dutybeat"
+version = "0.1.0"
+description = "Official Python client for the DutyBeat public API."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "DutyBeat" }]
+keywords = ["dutybeat", "hr", "attendance", "api", "sdk"]
+dependencies = ["httpx>=0.24"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://dutybeat.com"
+Documentation = "https://app.dutybeat.com/configuracion/api"
+Source = "https://github.com/manuelcamposborras00/dutybeat-python"
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "respx>=0.20"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dutybeat"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/dutybeat", "README.md", "LICENSE", "CHANGELOG.md"]
