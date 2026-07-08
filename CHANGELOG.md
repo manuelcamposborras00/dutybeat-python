@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses [SemVer](https://semver.org/).
 
+## [0.2.1]
+
+### Changed
+- Richer editor help: `DutyBeat(...)` and `users.get(...)` now document every parameter (Args), so the
+  signature-help popup in VS Code describes each one. No API changes.
+
 ## [0.2.0]
 
 ### Changed

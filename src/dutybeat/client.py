@@ -64,9 +64,20 @@ class _Users:
         self._client = client
 
     def get(self, user_id: str, *, include_folders: bool = False) -> User:
-        """``GET /api/v1/users/:user_id`` — fetch a user's full record.
+        """Fetch a user's full record — ``GET /api/v1/users/:user_id``.
 
-        Set ``include_folders=True`` to also receive the employee's document folders (metadata only).
+        Args:
+            user_id: The user's id within your company.
+            include_folders: If ``True``, also include the employee's document folders
+                (metadata only: id, name and document count).
+
+        Returns:
+            User: The user's account and profile data (see the ``User`` model).
+
+        Raises:
+            NotFoundError: If the user does not exist or belongs to another company.
+            ForbiddenError: If the API key does not have the ``users.get`` method enabled.
+            AuthenticationError: If the API key is missing or invalid.
         """
         params: Dict[str, str] = {}
         if include_folders:
@@ -95,6 +106,19 @@ class DutyBeat:
         timeout: float = 30.0,
         max_retries: int = 2,
     ):
+        """Create a DutyBeat API client.
+
+        Args:
+            api_key: Your API key (starts with ``db_live_``). Create one in the app under
+                Configuración → Claves de API. If omitted, the ``DUTYBEAT_API_KEY`` environment
+                variable is used instead.
+            base_url: Base URL of the API. Defaults to the production API; override only for testing.
+            timeout: Per-request timeout, in seconds.
+            max_retries: How many times to retry on ``429``/``5xx`` responses, honouring ``Retry-After``.
+
+        Raises:
+            DutyBeatError: If no API key is passed and ``DUTYBEAT_API_KEY`` is not set.
+        """
         key = api_key or os.environ.get("DUTYBEAT_API_KEY")
         if not key:
             raise DutyBeatError(
