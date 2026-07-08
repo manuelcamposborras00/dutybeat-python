@@ -17,7 +17,7 @@ from .errors import (
 )
 from .models import Folder, Profile, Ref, User
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "DutyBeat",

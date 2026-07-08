@@ -6,35 +6,61 @@ default to ``None``, so a new field added to the API never breaks an older clien
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Dict, List, Optional
 
 
+@dataclass
 class Profile:
-    """The employee's profile (Mi Perfil) fields.
+    """The employee's profile (Mi Perfil) fields, from ``GET /api/v1/users/:id``.
 
-    Backed by the raw dict so new profile fields are available immediately. Supports both attribute
-    access (``profile.iban``) and item access (``profile["iban"]``); unknown keys return ``None``.
+    Every field is declared and typed, so editors (VS Code / Pylance) autocomplete them and show help.
+    Item access (``profile["iban"]``) and ``profile.get("iban")`` also work; unknown keys return ``None``.
+    Fields the API may add in the future are ignored gracefully instead of raising.
     """
 
-    def __init__(self, data: Optional[Dict[str, Any]] = None):
-        self._data: Dict[str, Any] = dict(data or {})
+    phone_company: Optional[str] = None
+    phone_personal: Optional[str] = None
+    personal_email: Optional[str] = None
+    birth_date: Optional[str] = None
+    nationality: Optional[str] = None
+    dni: Optional[str] = None
+    dni_expiry: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
+    passport_number: Optional[str] = None
+    passport_issue: Optional[str] = None
+    passport_expiry: Optional[str] = None
+    health_insurance: Optional[str] = None
+    iban: Optional[str] = None
+    swift: Optional[str] = None
+    country: Optional[str] = None
+    company_name: Optional[str] = None
+    company_cif: Optional[str] = None
+    work_location: Optional[str] = None
+    work_address: Optional[str] = None
+    ssn: Optional[str] = None
+    qualifications: List[str] = field(default_factory=list)
 
-    def __getattr__(self, name: str) -> Any:
-        # Only reached for names not set as real attributes.
-        return self._data.get(name)
+    @classmethod
+    def from_dict(cls, data: Optional[Dict[str, Any]]) -> "Profile":
+        data = dict(data or {})
+        known = {f.name for f in fields(cls)}
+        quals = data.get("qualifications")
+        return cls(
+            qualifications=[q for q in quals if isinstance(q, str)] if isinstance(quals, list) else [],
+            **{k: data[k] for k in known & data.keys() if k != "qualifications"},
+        )
 
     def __getitem__(self, name: str) -> Any:
-        return self._data.get(name)
+        return getattr(self, name, None)
 
     def get(self, name: str, default: Any = None) -> Any:
-        return self._data.get(name, default)
+        return getattr(self, name, default)
 
     def to_dict(self) -> Dict[str, Any]:
-        return dict(self._data)
-
-    def __repr__(self) -> str:
-        return f"Profile({self._data!r})"
+        return asdict(self)
 
 
 @dataclass
@@ -89,6 +115,7 @@ class User:
     work_center: Optional[Ref] = None
     profile: Profile = field(default_factory=Profile)
     folders: Optional[List[Folder]] = None
+    # `profile=` is populated via Profile.from_dict in User.from_dict below.
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "User":
@@ -109,6 +136,6 @@ class User:
             has_photo=bool(data.get("has_photo", False)),
             department=Ref.from_dict(data.get("department")),
             work_center=Ref.from_dict(data.get("work_center")),
-            profile=Profile(data.get("profile") or {}),
+            profile=Profile.from_dict(data.get("profile")),
             folders=[Folder.from_dict(f) for f in folders] if isinstance(folders, list) else None,
         )

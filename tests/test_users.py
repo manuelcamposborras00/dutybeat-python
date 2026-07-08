@@ -1,3 +1,5 @@
+import dataclasses
+
 import httpx
 import pytest
 import respx
@@ -7,6 +9,7 @@ from dutybeat import (
     DutyBeat,
     ForbiddenError,
     NotFoundError,
+    Profile,
     RateLimitError,
 )
 
@@ -84,6 +87,23 @@ def test_429_retries_then_raises():
     )
     with pytest.raises(RateLimitError):
         client().users.get("9f1c")
+
+
+def test_profile_is_typed_dataclass_with_declared_fields():
+    # Guards the autocomplete contract: profile fields are real declared dataclass fields (not a dict
+    # proxy), so editors can complete them. If a field is renamed/removed here, this breaks.
+    assert dataclasses.is_dataclass(Profile)
+    names = {f.name for f in dataclasses.fields(Profile)}
+    assert {"dni", "iban", "ssn", "phone_personal", "qualifications"} <= names
+
+
+def test_profile_parsing_and_leniency():
+    p = Profile.from_dict({"iban": "ES91...", "qualifications": ["Ing"], "brand_new_field": "x"})
+    assert p.iban == "ES91..."          # typed attribute access
+    assert p["iban"] == "ES91..."        # item access still works
+    assert p.qualifications == ["Ing"]
+    assert p.dni is None                 # missing field defaults to None
+    assert p.get("brand_new_field") is None  # unknown/newer API field ignored, no crash
 
 
 def test_missing_api_key_raises():
