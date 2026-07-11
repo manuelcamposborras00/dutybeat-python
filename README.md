@@ -21,6 +21,21 @@ print(user.department.name)
 print(user.profile.iban)
 for folder in user.folders or []:
     print(folder.name, folder.document_count)
+
+# List users (paginated, filterable)
+page = client.users.list(page_size=50, status="active", role="member")
+for u in page:                       # UserPage is iterable
+    print(u.full_name, u.email)
+print("total:", page.total)
+
+# List an employee's workdays (marks, worked minutes, balance). `from_` because `from` is reserved.
+days = client.attendance.list("9f1c...", from_="2026-06-01", to="2026-06-30")
+for day in days:                     # AttendancePage is iterable
+    print(day.date, day.worked_minutes, day.balance_minutes)
+
+# List absences overlapping a range (whole company, or one employee with user_id=...)
+for absence in client.absences.list(from_="2026-06-01", to="2026-06-30", status="approved"):
+    print(absence.start_date, absence.end_date, absence.type.label)
 ```
 
 Create an API key in the app under **Configuración → Claves de API**, and enable the methods each key
