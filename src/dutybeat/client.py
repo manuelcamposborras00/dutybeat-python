@@ -467,6 +467,83 @@ class _Absences:
         body = self._client._request("GET", "/api/v1/absences", params=params)
         return AbsencePage.from_response(body)
 
+    def create(
+        self,
+        *,
+        user_id: str,
+        type: str,  # noqa: A002 - mirrors the API's body field name
+        start_date: str,
+        end_date: str,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        note: Optional[str] = None,
+    ) -> Absence:
+        """Register an absence for an employee — ``POST /api/v1/absences``.
+
+        The absence belongs to ``user_id`` (the subject), created on their behalf. It follows the same
+        rules as an in-app request (overlap, vacation balance, hourly slot) and enters ``pending`` or
+        ``approved`` depending on the type. Requires the key to be able to manage employees.
+
+        Args:
+            user_id: The employee the absence is for.
+            type: Absence type key (see :meth:`DutyBeat.absence_types`).
+            start_date: First day, ``YYYY-MM-DD`` (not in the past).
+            end_date: Last day, ``YYYY-MM-DD`` (inclusive).
+            start_time: For an hourly absence, start ``HH:MM`` (same day as end).
+            end_time: For an hourly absence, end ``HH:MM``.
+            note: Optional free-text note.
+
+        Returns:
+            Absence: The created absence (with its resulting status).
+
+        Raises:
+            NotFoundError: If ``user_id`` does not exist or belongs to another company.
+            ForbiddenError: If the key lacks ``absences.create`` or the actor can't manage employees.
+            APIError: 400/409 on an invalid request (bad type, overlap, insufficient balance…).
+            AuthenticationError: If the API key is missing or invalid.
+        """
+        payload: Dict[str, Any] = {
+            "user_id": user_id,
+            "type": type,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        for key, value in (("start_time", start_time), ("end_time", end_time), ("note", note)):
+            if value is not None:
+                payload[key] = value
+        body = self._client._request("POST", "/api/v1/absences", json_body=payload)
+        return Absence.from_dict(body["data"])
+
+    def decide(self, absence_id: str, decision: str, *, note: Optional[str] = None) -> Absence:
+        """Approve or reject a pending absence — ``POST /api/v1/absences/:absence_id/decide``.
+
+        The key's user must be able to approve it (HR department, or supervises the requester's
+        department by hierarchy) and cannot decide their own. Only a still-pending absence can be
+        decided.
+
+        Args:
+            absence_id: The absence to resolve.
+            decision: ``"approved"`` or ``"rejected"``.
+            note: Optional free-text note for the decision.
+
+        Returns:
+            Absence: The absence, now resolved.
+
+        Raises:
+            NotFoundError: If the absence does not exist or belongs to another company.
+            ForbiddenError: If the key lacks ``absences.decide``, or the actor can't approve it / it's
+                their own.
+            APIError: 409 if the absence is no longer pending; 400 on an invalid decision.
+            AuthenticationError: If the API key is missing or invalid.
+        """
+        payload: Dict[str, Any] = {"decision": decision}
+        if note is not None:
+            payload["note"] = note
+        body = self._client._request(
+            "POST", f"/api/v1/absences/{absence_id}/decide", json_body=payload
+        )
+        return Absence.from_dict(body["data"])
+
 
 class _AbsenceTypes:
     """The ``absence_types`` resource."""

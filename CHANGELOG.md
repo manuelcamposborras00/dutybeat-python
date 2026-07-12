@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses [SemVer](https://semver.org/).
 
+## [0.20.0]
+
+### Added
+- `absences.create(user_id=..., type=..., start_date=..., end_date=...)` for `POST /api/v1/absences`
+  (Create Absence): registers an absence on behalf of an employee; enters pending or approved per type.
+- `absences.decide(absence_id, decision, note=...)` for `POST /api/v1/absences/:id/decide` (Decide
+  Absence): approve/reject a pending absence. Both require the corresponding method on the key.
+
 ## [0.19.0]
 
 ### Added
