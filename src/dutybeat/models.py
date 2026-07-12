@@ -600,6 +600,26 @@ class Punch:
 
 
 @dataclass
+class PunchRecord:
+    """A mark just pushed via ``POST /api/v1/attendance`` (Push Attendance).
+
+    ``ts`` is the real instant of the mark (ISO-8601); ``modality`` is set only for an ``in`` mark
+    (``onsite`` / ``remote``), otherwise ``None``. Geolocation is never returned.
+    """
+
+    id: Optional[str] = None
+    user_id: Optional[str] = None
+    type: Optional[str] = None
+    ts: Optional[str] = None
+    modality: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "PunchRecord":
+        known = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in data.items() if k in known})
+
+
+@dataclass
 class AttendanceDay:
     """One calendar day of an employee's attendance.
 

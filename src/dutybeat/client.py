@@ -27,6 +27,7 @@ from .models import (
     ExpensePage,
     HolidayPage,
     Identity,
+    PunchRecord,
     User,
     UserPage,
     WorkCenterPage,
@@ -395,6 +396,43 @@ class _Attendance:
             params["work_center_id"] = work_center_id
         body = self._client._request("GET", "/api/v1/attendance/summary", params=params)
         return AttendanceSummaryPage.from_response(body)
+
+    def create(
+        self,
+        *,
+        user_id: str,
+        type: str,  # noqa: A002 - mirrors the API's body field name
+        ts: str,
+        modality: Optional[str] = None,
+    ) -> PunchRecord:
+        """Push an attendance mark for an employee — ``POST /api/v1/attendance``.
+
+        Registers one mark (in/out/break_start/break_end) on behalf of ``user_id``, with its real
+        moment ``ts`` — for feeding punches from an external time clock. The record is append-only (legal
+        value): marks must arrive in chronological order and in a coherent sequence, or the API returns
+        409. ``ts`` can't be in the future nor older than 60 days. Requires the key to be able to manage
+        employees. Geolocation is neither accepted nor returned.
+
+        Args:
+            user_id: The employee who clocked the mark.
+            type: ``"in"``, ``"out"``, ``"break_start"`` or ``"break_end"``.
+            ts: The real instant of the mark (ISO-8601). Not future, ≤ 60 days old, after the last mark.
+            modality: For ``"in"`` only — ``"onsite"`` (default) or ``"remote"``.
+
+        Returns:
+            PunchRecord: The created mark (``id``, ``user_id``, ``type``, ``ts``, ``modality``).
+
+        Raises:
+            NotFoundError: If ``user_id`` does not exist or belongs to another company.
+            ForbiddenError: If the key lacks ``attendance.create`` or the actor can't manage employees.
+            APIError: 400 (bad type/ts) or 409 (out of order / incoherent sequence).
+            AuthenticationError: If the API key is missing or invalid.
+        """
+        payload: Dict[str, Any] = {"user_id": user_id, "type": type, "ts": ts}
+        if modality is not None:
+            payload["modality"] = modality
+        body = self._client._request("POST", "/api/v1/attendance", json_body=payload)
+        return PunchRecord.from_dict(body["data"])
 
 
 class _Absences:

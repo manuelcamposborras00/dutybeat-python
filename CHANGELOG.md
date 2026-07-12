@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses [SemVer](https://semver.org/).
 
+## [0.21.0]
+
+### Added
+- `attendance.create(user_id=..., type=..., ts=...)` for `POST /api/v1/attendance` (Push Attendance):
+  registers one attendance mark on behalf of an employee (for external time clocks). Append-only; marks
+  must arrive in order and in a coherent sequence. Returns a new `PunchRecord`. Requires the
+  `attendance.create` method on the key.
+
 ## [0.20.0]
 
 ### Added

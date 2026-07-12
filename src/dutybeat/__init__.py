@@ -36,6 +36,7 @@ from .models import (
     Identity,
     Profile,
     Punch,
+    PunchRecord,
     Ref,
     User,
     UserPage,
@@ -43,7 +44,7 @@ from .models import (
     WorkCenterPage,
 )
 
-__version__ = "0.20.0"
+__version__ = "0.21.0"
 
 __all__ = [
     "DutyBeat",
@@ -55,6 +56,7 @@ __all__ = [
     "AttendanceSummary",
     "AttendanceSummaryPage",
     "Punch",
+    "PunchRecord",
     "Absence",
     "AbsencePage",
     "AbsenceType",
